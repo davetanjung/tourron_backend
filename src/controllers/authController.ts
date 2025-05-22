@@ -3,7 +3,6 @@ import { NextFunction, Request, Response } from "express";
 import { authService } from "../services/authService";
 import { UserRequest } from "../types/user-request";
 
-
 export class authController {
 
     static async register(req: Request, res: Response, next: NextFunction) {
@@ -11,11 +10,11 @@ export class authController {
             const request: RegisterUserRequest = req.body as RegisterUserRequest
             const response: UserResponse = await authService.register(request)
 
-            res.status(200).json({
+            res.status(201).json({
                 data: response,
+                message: "User registered successfully"
             })
         } catch (error) {
-            // pass to the middleware if error exists
             next(error)
         }
     }
@@ -25,8 +24,19 @@ export class authController {
             const request = req.body as LoginUserRequest
             const response = await authService.login(request)
 
+            // Optionally set JWT token as httpOnly cookie for enhanced security
+            if (response.token) {
+                res.cookie("jwt", response.token, {
+                    httpOnly: true,
+                    secure: process.env.NODE_ENV === "production",
+                    sameSite: "strict",
+                    maxAge: 24 * 60 * 60 * 1000, // 24 hours
+                });
+            }
+
             res.status(200).json({
                 data: response,
+                message: "Login successful"
             })
         } catch (error) {
             next(error)
@@ -37,14 +47,19 @@ export class authController {
         try {
             const response = await authService.logout(req.user!)
 
+            // Clear the JWT cookie
+            res.clearCookie("jwt", {
+                httpOnly: true,
+                secure: process.env.NODE_ENV === "production",
+                sameSite: "strict",
+            });
+
             res.status(200).json({
                 data: response,
+                message: "Logout successful"
             })
         } catch (error) {
             next(error)
         }
     }
-
-
-
 }

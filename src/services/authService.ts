@@ -1,4 +1,4 @@
-import { v4 as uuidv4 } from 'uuid';
+import jwt from 'jsonwebtoken';
 import { prismaClient } from "../applications/database";
 import { ResponseError } from "../error/response-error";
 import { LoginUserRequest, RegisterUserRequest, toUserResponse, UserResponse } from "../models/User";
@@ -8,6 +8,19 @@ import bcrypt from "bcrypt";
 import { User } from "@prisma/client";
 
 export class authService {
+
+    private static generateJWTToken(userId: number): string {
+        const jwtSecret = process.env.JWT_SECRET;
+        if (!jwtSecret) {
+            throw new ResponseError(500, "JWT secret not configured");
+        }
+        
+        return jwt.sign(
+            { userId: userId }, 
+            jwtSecret, 
+            { expiresIn: '24h' }
+        );
+    }
 
     static async register(req: RegisterUserRequest): Promise<UserResponse> {
         // validate request
@@ -32,20 +45,24 @@ export class authService {
             data: {
                 username: registerReq.username,
                 email: registerReq.email,
-                password: registerReq.password,
-                token: uuidv4()
+                password: registerReq.password
             }
         })
 
-        return toUserResponse(user)
+        // Generate JWT token
+        const token = this.generateJWTToken(user.id);
 
+        const response = toUserResponse(user);
+        response.token = token;
+
+        return response;
     }
 
     static async login(request: LoginUserRequest): Promise<UserResponse>{
 
         const loginRequest = Validation.validate(userValidation.LOGIN, request)
 
-        let user = await prismaClient.user.findFirst({
+        const user = await prismaClient.user.findFirst({
             where: {
                 email: loginRequest.email
             }
@@ -64,20 +81,13 @@ export class authService {
             throw new ResponseError(400, "Invalid email or password!")
         }
 
-        // Token diupdate karena setiap user beroperasi token harus baru demi safety
-        user = await prismaClient.user.update({
-            where: {
-                id: user.id,
-            },
-            data: {
-                token: uuidv4()
-            }
-        })
+        // Generate JWT token
+        const token = this.generateJWTToken(user.id);
 
-        const response = toUserResponse(user)
+        const response = toUserResponse(user);
+        response.token = token;
 
-        return response
-
+        return response;
     }
 
     static async logout(user: User): Promise<string>{
@@ -92,6 +102,20 @@ export class authService {
         })
 
         return "Logout succesful!"
+    }
+
+    static verifyJWTToken(token: string): { userId: number } {
+        const jwtSecret = process.env.JWT_SECRET;
+        if (!jwtSecret) {
+            throw new ResponseError(500, "JWT secret not configured");
+        }
+
+        try {
+            const decoded = jwt.verify(token, jwtSecret) as { userId: number };
+            return decoded;
+        } catch (error) {
+            throw new ResponseError(401, "Invalid or expired token");
+        }
     }
 
 }
