@@ -14,10 +14,10 @@ export class authService {
         if (!jwtSecret) {
             throw new ResponseError(500, "JWT secret not configured");
         }
-        
+
         return jwt.sign(
-            { userId: userId }, 
-            jwtSecret, 
+            { userId: userId },
+            jwtSecret,
             { expiresIn: '24h' }
         );
     }
@@ -35,7 +35,7 @@ export class authService {
             }
         })
 
-        if(email){ 
+        if (email) {
             throw new ResponseError(400, "Email already exist")
         }
 
@@ -58,7 +58,7 @@ export class authService {
         return response;
     }
 
-    static async login(request: LoginUserRequest): Promise<UserResponse>{
+    static async login(request: LoginUserRequest): Promise<UserResponse> {
 
         const loginRequest = Validation.validate(userValidation.LOGIN, request)
 
@@ -68,7 +68,7 @@ export class authService {
             }
         })
 
-        if(!user){
+        if (!user) {
             throw new ResponseError(400, "Invalid email or password!")
         }
 
@@ -77,32 +77,37 @@ export class authService {
             user.password
         )
 
-        if(!passwordIsValid) {
+        if (!passwordIsValid) {
             throw new ResponseError(400, "Invalid email or password!")
         }
 
         // Generate JWT token
         const token = this.generateJWTToken(user.id);
 
-        const response = toUserResponse(user);
+        const updatedUser = await prismaClient.user.update({
+            where: { id: user.id },
+            data: { token },
+        });
+
+        const response = toUserResponse(updatedUser);
         response.token = token;
 
         return response;
     }
 
-    static async logout(user: User): Promise<string>{
-          
-        await prismaClient.user.update({
-            where: {
-                id: user.id,
-            },
-            data:{
-                token: null
-            }
-        })
+    static async logout(user: User): Promise<string> {
+        if (!user || !user.id) {
+            throw new ResponseError(401, "Unauthorized - invalid user");
+        }
 
-        return "Logout succesful!"
+        await prismaClient.user.update({
+            where: { id: user.id },
+            data: { token: null }
+        });
+
+        return "Logout successful!";
     }
+
 
     static verifyJWTToken(token: string): { userId: number } {
         const jwtSecret = process.env.JWT_SECRET;

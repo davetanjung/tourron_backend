@@ -4,18 +4,18 @@ import { UserRequest } from "../types/user-request";
 import { Request, Response, NextFunction } from "express";
 import { authService } from "../services/authService";
 
-export const authMiddleware = async(
+export const authMiddleware = async (
     req: UserRequest,
     res: Response,
     next: NextFunction
 ) => {
     try {
         let token = req.get("Authorization");
-        
+
         if (token && token.startsWith("Bearer ")) {
             token = token.substring(7); // Remove "Bearer " prefix
         } else {
-            token = req.get("x-API-TOKEN"); 
+            token = req.get("x-API-TOKEN");
         }
 
         if (!token && req.cookies && req.cookies.jwt) {
@@ -27,6 +27,13 @@ export const authMiddleware = async(
         }
 
         const decoded = authService.verifyJWTToken(token);
+        if (!decoded || !decoded.userId) {
+            return next(new ResponseError(401, "Invalid token payload"));
+        }
+
+        console.log("Token:", token);
+        console.log("Decoded userId:", decoded.userId);
+
 
         const user = await prismaClient.user.findUnique({
             where: {
