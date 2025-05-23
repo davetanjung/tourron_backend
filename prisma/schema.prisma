@@ -15,8 +15,38 @@ model User {
   email      String     @unique @db.VarChar(150)
   password   String     @db.VarChar(100)
   token      String?    @db.Text
+  itineraries Itinerary[]
+  
 
   @@map("users")
+}
+
+model Itinerary {
+  id Int @id @default(autoincrement())
+  title String @db.VarChar(100)
+  start_date DateTime @db.Timestamp(0)
+  end_date DateTime @db.Timestamp(0)
+  estimate_start DateTime @db.Timestamp(0)
+  estimate_end DateTime @db.Timestamp(0)
+  total_person Int @db.Integer
+  country String @db.VarChar(100)
+  location String @db.Text
+  userId     Int // Foreign key field
+  user       User     @relation(fields: [userId], references: [id]) // Define relation
+
+  @@map("itineraries")
+}
+
+model ItineraryDay{
+  id Int @id @default(autoincrement())
+  day DateTime @db.Timestamp(0)
+  start_time DateTime @db.Timestamp(0)
+  end_time DateTime @db.Timestamp(0)
+  activity_description String @db.VarChar(200)
+  meeting_time DateTime @db.Time(0)
+
+
+   @@map("itineraryDays")
 }
 
 
