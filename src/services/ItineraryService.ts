@@ -43,6 +43,7 @@ export class itineraryService {
 
         const response = itineraries.map((itinerary) => {
             return {
+                id: itinerary.id,
                 title: itinerary.title,
                 start_date: itinerary.start_date.toISOString(),
                 end_date: itinerary.end_date.toISOString(),
