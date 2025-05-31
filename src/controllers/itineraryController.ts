@@ -21,7 +21,7 @@ export class itineraryController {
         try {
             const response: ReadItineraryResponse[] = await itineraryService.getAllItineraries();
 
-            res.status(201).json({
+            res.status(200).json({
                 data: response
             });
         } catch (error) {

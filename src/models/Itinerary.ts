@@ -28,6 +28,7 @@ export interface DeleteItineraryRequest {
 }
 
 export interface ReadItineraryResponse {
+    id: number;
     title: string;
     start_date: string;
     end_date: string;
