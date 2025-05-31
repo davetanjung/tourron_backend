@@ -48,16 +48,18 @@ export class itineraryDayController {
   }
 
   static async deleteItineraryDay(req: Request, res: Response, next: NextFunction) {
-    try {
-      const request: DeleteItineraryDayRequest = req.body as DeleteItineraryDayRequest;
-      const response: string = await itineraryDayService.deleteItineraryDay(request);
+  try {
+    const id = parseInt(req.params.id);
+    if (isNaN(id)) throw new Error("Invalid itinerary day ID");
 
-      res.status(200).json({
-        data: response
-      });
-    } catch (error) {
-      next(error);
-    }
+    const response: string = await itineraryDayService.deleteItineraryDay({ id });
+
+    res.status(200).json({
+      data: response
+    });
+  } catch (error) {
+    next(error);
   }
+}
 
 }
