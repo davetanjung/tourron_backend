@@ -44,10 +44,13 @@ export class itineraryController {
 
     static async deleteItinerary(req: Request, res: Response, next: NextFunction) {
         try {
-            const request: DeleteItineraryRequest = req.body as DeleteItineraryRequest;
+            const itineraryIdString = req.params.id;
+            const itineraryId = parseInt(itineraryIdString, 10);
+
+            const request: DeleteItineraryRequest = { id: itineraryId };
             const response: string = await itineraryService.deleteItinerary(request);
 
-            res.status(201).json({
+            res.status(200).json({
                 data: response
             })
         } catch (error) {
