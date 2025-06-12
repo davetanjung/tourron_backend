@@ -32,7 +32,7 @@ model Itinerary {
   location       String         @db.Text
   userId         Int // Foreign key field
   user           User           @relation(fields: [userId], references: [id]) // Define relation
-  itinerarieDays ItineraryDay[]
+  itinerarieDays ItineraryDay[] 
 
   @@map("itineraries")
 }
@@ -45,7 +45,7 @@ model ItineraryDay {
   activity_description String    @db.VarChar(200)
   meeting_time         DateTime  @db.Time(0)
   itineraryId          Int
-  itinerary            Itinerary @relation(fields: [itineraryId], references: [id])
+  itinerary            Itinerary @relation(onDelete: Cascade, fields: [itineraryId], references: [id])
   // activities           Activity[]
 
   @@map("itineraryDays")
